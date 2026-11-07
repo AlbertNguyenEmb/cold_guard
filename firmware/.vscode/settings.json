@@ -1,0 +1,14 @@
+{
+    "cmake.sourceDirectory": "D:/HCMUT/K261/IOT/cold_guard_project/firmware/main_controller",
+    "idf.currentSetup": "C:\\esp\\v6.1\\esp-idf",
+    "idf.openOcdConfigs": [
+        "board/esp32s3-builtin.cfg"
+    ],
+    "idf.customExtraVars": {},
+    "clangd.path": "C:\\Espressif\\tools\\esp-clangd\\esp-21.1.3_20260408\\esp-clangd\\bin\\clangd.exe",
+    "clangd.arguments": [
+      "--background-index",
+      "--query-driver=**",
+      "--compile-commands-dir=d:\\HCMUT\\K261\\IOT\\cold_guard_project\\firmware\\build"
+    ]
+}

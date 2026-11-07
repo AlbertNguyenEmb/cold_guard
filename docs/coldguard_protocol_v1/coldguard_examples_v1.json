@@ -1,0 +1,111 @@
+{
+  "zone_a_telemetry": {
+    "v": 1,
+    "type": "telemetry",
+    "device_id": "yolo-main-01",
+    "zone_id": "zone_a",
+    "boot_id": "a1b2c3d4",
+    "seq": 17,
+    "uptime_ms": 17000,
+    "ts": null,
+    "data": {
+      "temperature_c": 5.8,
+      "humidity_pct": 75.4,
+      "door_open": false,
+      "sensor_ok": true,
+      "source": "sht40_modbus"
+    }
+  },
+  "zone_b_telemetry": {
+    "v": 1,
+    "type": "telemetry",
+    "device_id": "espnow-node-01",
+    "zone_id": "zone_b",
+    "boot_id": "e5f60718",
+    "seq": 102,
+    "uptime_ms": 204000,
+    "ts": null,
+    "data": {
+      "temperature_c": 6.2,
+      "humidity_pct": null,
+      "door_open": null,
+      "sensor_ok": true,
+      "source": "ds18b20_espnow"
+    }
+  },
+  "main_status": {
+    "v": 1,
+    "type": "status",
+    "device_id": "yolo-main-01",
+    "ts": null,
+    "data": {
+      "online": true,
+      "wifi_connected": true,
+      "mqtt_connected": true,
+      "rssi_dbm": -53,
+      "firmware_version": "0.1.0",
+      "uptime_ms": 59000
+    }
+  },
+  "mute_buzzer_command": {
+    "v": 1,
+    "type": "command",
+    "device_id": "gateway-01",
+    "target_device_id": "yolo-main-01",
+    "request_id": "gw-000001",
+    "ts": "2026-11-04T14:00:01Z",
+    "data": {
+      "action": "mute_buzzer",
+      "params": {
+        "mute": true
+      }
+    }
+  },
+  "mute_buzzer_ack": {
+    "v": 1,
+    "type": "ack",
+    "device_id": "yolo-main-01",
+    "request_id": "gw-000001",
+    "ts": null,
+    "data": {
+      "action": "mute_buzzer",
+      "success": true,
+      "result": {
+        "buzzer_muted": true
+      },
+      "error_code": null
+    }
+  },
+  "set_threshold_command": {
+    "v": 1,
+    "type": "command",
+    "device_id": "gateway-01",
+    "target_device_id": "yolo-main-01",
+    "request_id": "gw-000002",
+    "ts": "2026-11-04T14:01:01Z",
+    "data": {
+      "action": "set_threshold",
+      "params": {
+        "zone_id": "zone_a",
+        "min_c": 2.0,
+        "max_c": 8.0
+      }
+    }
+  },
+  "temperature_high_event": {
+    "v": 1,
+    "type": "event",
+    "device_id": "gateway-01",
+    "zone_id": "zone_a",
+    "event_id": "evt-20261104-0001",
+    "ts": "2026-11-04T14:02:00Z",
+    "data": {
+      "code": "TEMP_HIGH",
+      "severity": "warning",
+      "state": "active",
+      "value": 9.2,
+      "threshold": 8.0,
+      "message": "Nhiệt độ vượt ngưỡng"
+    }
+  }
+}

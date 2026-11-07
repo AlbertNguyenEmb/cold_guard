@@ -1,0 +1,10 @@
+{
+  "folders": [
+    { "path": "main_controller" },
+    { "path": "espnow_node" }
+  ],
+  "settings": {
+    "idf.extensionActivationMode": "always",
+    "cmake.configureOnOpen": false
+  }
+}

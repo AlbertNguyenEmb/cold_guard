@@ -1,0 +1,615 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://coldguard.example/schema/message-v1.json",
+  "title": "ColdGuard Internal Message v1",
+  "description": "Validation of internal LAN MQTT ColdGuard messages, not native Tasmota/CoreIOT payloads.",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "v": {
+          "const": 1
+        },
+        "type": {
+          "const": "telemetry"
+        },
+        "device_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "ts": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "data": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "temperature_c": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": -60,
+              "maximum": 100
+            },
+            "humidity_pct": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 100
+            },
+            "door_open": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "sensor_ok": {
+              "type": "boolean"
+            },
+            "source": {
+              "enum": [
+                "sht40_modbus",
+                "ds18b20_espnow"
+              ]
+            }
+          },
+          "required": [
+            "temperature_c",
+            "humidity_pct",
+            "door_open",
+            "sensor_ok",
+            "source"
+          ]
+        },
+        "zone_id": {
+          "enum": [
+            "zone_a",
+            "zone_b"
+          ]
+        },
+        "boot_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}$"
+        },
+        "seq": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        "uptime_ms": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "v",
+        "type",
+        "device_id",
+        "ts",
+        "data",
+        "zone_id",
+        "boot_id",
+        "seq",
+        "uptime_ms"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "data": {
+                "properties": {
+                  "sensor_ok": {
+                    "const": false
+                  }
+                }
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "properties": {
+                  "temperature_c": {
+                    "type": "null"
+                  },
+                  "humidity_pct": {
+                    "type": "null"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "v": {
+          "const": 1
+        },
+        "type": {
+          "const": "status"
+        },
+        "device_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "ts": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "data": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "online": {
+              "type": "boolean"
+            },
+            "wifi_connected": {
+              "type": "boolean"
+            },
+            "mqtt_connected": {
+              "type": "boolean"
+            },
+            "rssi_dbm": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": -120,
+              "maximum": 0
+            },
+            "firmware_version": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uptime_ms": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "online",
+            "wifi_connected",
+            "mqtt_connected",
+            "rssi_dbm",
+            "firmware_version",
+            "uptime_ms"
+          ]
+        }
+      },
+      "required": [
+        "v",
+        "type",
+        "device_id",
+        "ts",
+        "data"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "v": {
+          "const": 1
+        },
+        "type": {
+          "const": "command"
+        },
+        "device_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "ts": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "data": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "action": {
+              "enum": [
+                "mute_buzzer",
+                "set_threshold",
+                "set_report_interval"
+              ]
+            },
+            "params": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "mute": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "mute"
+                  ]
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "zone_id": {
+                      "enum": [
+                        "zone_a",
+                        "zone_b"
+                      ]
+                    },
+                    "min_c": {
+                      "type": "number"
+                    },
+                    "max_c": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "zone_id",
+                    "min_c",
+                    "max_c"
+                  ]
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "period_s": {
+                      "type": "integer",
+                      "minimum": 2,
+                      "maximum": 3600
+                    }
+                  },
+                  "required": [
+                    "period_s"
+                  ]
+                }
+              ]
+            }
+          },
+          "required": [
+            "action",
+            "params"
+          ]
+        },
+        "target_device_id": {
+          "const": "yolo-main-01"
+        },
+        "request_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        }
+      },
+      "required": [
+        "v",
+        "type",
+        "device_id",
+        "ts",
+        "data",
+        "target_device_id",
+        "request_id"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "data": {
+                "properties": {
+                  "action": {
+                    "const": "mute_buzzer"
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "properties": {
+                  "params": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "mute": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "mute"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "data": {
+                "properties": {
+                  "action": {
+                    "const": "set_threshold"
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "properties": {
+                  "params": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "zone_id": {
+                        "enum": [
+                          "zone_a",
+                          "zone_b"
+                        ]
+                      },
+                      "min_c": {
+                        "type": "number"
+                      },
+                      "max_c": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "zone_id",
+                      "min_c",
+                      "max_c"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "data": {
+                "properties": {
+                  "action": {
+                    "const": "set_report_interval"
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "properties": {
+                  "params": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "period_s": {
+                        "type": "integer",
+                        "minimum": 2,
+                        "maximum": 3600
+                      }
+                    },
+                    "required": [
+                      "period_s"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "v": {
+          "const": 1
+        },
+        "type": {
+          "const": "ack"
+        },
+        "device_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "ts": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "data": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "action": {
+              "enum": [
+                "mute_buzzer",
+                "set_threshold",
+                "set_report_interval"
+              ]
+            },
+            "success": {
+              "type": "boolean"
+            },
+            "result": {
+              "type": "object"
+            },
+            "error_code": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "action",
+            "success",
+            "result",
+            "error_code"
+          ]
+        },
+        "request_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        }
+      },
+      "required": [
+        "v",
+        "type",
+        "device_id",
+        "ts",
+        "data",
+        "request_id"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "v": {
+          "const": 1
+        },
+        "type": {
+          "const": "event"
+        },
+        "device_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "ts": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "data": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "code": {
+              "enum": [
+                "TEMP_HIGH",
+                "TEMP_LOW",
+                "DOOR_OPEN_TOO_LONG",
+                "SENSOR_TIMEOUT",
+                "NODE_OFFLINE",
+                "RAPID_TEMP_RISE",
+                "TEMP_RECOVERY_SLOW"
+              ]
+            },
+            "severity": {
+              "enum": [
+                "info",
+                "warning",
+                "critical"
+              ]
+            },
+            "state": {
+              "enum": [
+                "active",
+                "acknowledged",
+                "resolved"
+              ]
+            },
+            "value": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "threshold": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "message": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "code",
+            "severity",
+            "state",
+            "value",
+            "threshold",
+            "message"
+          ]
+        },
+        "event_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "zone_id": {
+          "enum": [
+            "zone_a",
+            "zone_b",
+            "zone_c"
+          ]
+        }
+      },
+      "required": [
+        "v",
+        "type",
+        "device_id",
+        "ts",
+        "data",
+        "event_id",
+        "zone_id"
+      ]
+    }
+  ]
+}

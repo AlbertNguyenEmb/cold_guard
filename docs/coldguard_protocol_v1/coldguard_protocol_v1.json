@@ -1,0 +1,252 @@
+{
+  "name": "ColdGuard Data Protocol",
+  "protocol_version": "1.0.0",
+  "schema_version": 1,
+  "description": "Hợp đồng dữ liệu nội bộ giữa Yolo UNO và Gateway; Tasmota/CoreIOT có adapter riêng.",
+  "owner": {
+    "member_1": "Embedded/Yolo UNO/ESP-NOW",
+    "member_2": "Gateway/Backend/Database",
+    "member_3": "Tasmota/CoreIOT/Rules/UI"
+  },
+  "devices": {
+    "yolo_main": "yolo-main-01",
+    "espnow_remote": "espnow-node-01",
+    "gateway": "gateway-01",
+    "tasmota": "tasmota-node-01"
+  },
+  "zones": {
+    "zone_a": {
+      "sensor": "SHT40 RS485 (Modbus RTU)",
+      "origin_device": "yolo-main-01",
+      "fields": [
+        "temperature_c",
+        "humidity_pct",
+        "door_open"
+      ]
+    },
+    "zone_b": {
+      "sensor": "DS18B20 via ESP-NOW",
+      "origin_device": "espnow-node-01",
+      "fields": [
+        "temperature_c"
+      ]
+    },
+    "zone_c": {
+      "sensor": "SHT31 via Tasmota I2C",
+      "origin_device": "tasmota-node-01",
+      "fields": [
+        "temperature_c",
+        "humidity_pct"
+      ],
+      "transport": "Tasmota native payload; map at cloud boundary"
+    }
+  },
+  "mqtt_local": {
+    "broker": "LAN Mosquitto on PC Gateway",
+    "topics": {
+      "zone_a_telemetry": "coldguard/zone_a/telemetry",
+      "zone_b_telemetry": "coldguard/zone_b/telemetry",
+      "main_status": "coldguard/main/status",
+      "main_command": "coldguard/main/command",
+      "main_ack": "coldguard/main/ack",
+      "events": "coldguard/events"
+    },
+    "rules": {
+      "qos": 1,
+      "telemetry_retain": false,
+      "command_retain": false,
+      "ack_retain": false,
+      "status_retain": true,
+      "status_lwt_offline": true
+    }
+  },
+  "field_contract": {
+    "required_common": [
+      "v",
+      "type",
+      "device_id",
+      "ts",
+      "data"
+    ],
+    "telemetry_required_extra": [
+      "zone_id",
+      "boot_id",
+      "seq",
+      "uptime_ms"
+    ],
+    "command_required_extra": [
+      "target_device_id",
+      "request_id"
+    ],
+    "ack_required_extra": [
+      "request_id"
+    ],
+    "event_required_extra": [
+      "zone_id",
+      "event_id"
+    ],
+    "units": {
+      "temperature_c": "degC",
+      "humidity_pct": "%RH",
+      "uptime_ms": "ms",
+      "rssi_dbm": "dBm"
+    },
+    "booleans": {
+      "door_open": "true means door is open",
+      "sensor_ok": "true means fresh valid sensor reading"
+    },
+    "timestamp_rule": "ts is RFC3339 UTC string or null; if null Gateway records its receive timestamp in UTC. Do not invent device time.",
+    "missing_data_rule": "Use null for unavailable measurements; do not use zero. For sensor_ok=false use null for invalid temperature/humidity.",
+    "dedup_rule": "Within each device/boot, seq increases. Gateway deduplicates with (device_id, boot_id, seq, zone_id).",
+    "command_rule": "request_id unique per command; ACK echoes same request_id. Mute does not clear an active alarm.",
+    "events_rule": "Event log belongs to Gateway application; CoreIOT RuleChain alarms are separate and may use correlated IDs."
+  },
+  "coreiot_adapter": {
+    "transport": "ThingsBoard-compatible MQTT (verify CoreIOT account configuration)",
+    "uplink_topic": "v1/devices/me/telemetry",
+    "rpc_request_subscription": "v1/devices/me/rpc/request/+",
+    "rpc_response_topic_pattern": "v1/devices/me/rpc/response/{request_id}",
+    "device_mapping": {
+      "zone_a": "COLD_ZONE_A",
+      "zone_b": "COLD_ZONE_B",
+      "zone_c": "COLD_ZONE_C"
+    },
+    "telemetry_key_mapping": {
+      "temperature_c": "temperature_c",
+      "humidity_pct": "humidity_pct",
+      "door_open": "door_open",
+      "sensor_ok": "sensor_ok"
+    },
+    "exclude_null_fields": true,
+    "time_policy": "Use original valid device UTC ts if present; otherwise use saved Gateway receive-time epoch ms, including after offline replay.",
+    "coreiot_example": {
+      "ts": 1793800800000,
+      "values": {
+        "temperature_c": 5.8,
+        "humidity_pct": 75.4,
+        "door_open": false,
+        "sensor_ok": true
+      }
+    },
+    "rpc_example_from_cloud": {
+      "method": "mute_buzzer",
+      "params": {
+        "mute": true
+      }
+    },
+    "rpc_adapter_rule": "Member 2 wraps incoming CoreIOT RPC in ColdGuard command, routes to Yolo UNO, waits for same request_id ACK, then responds on CoreIOT RPC response topic.",
+    "credential_rule": "One CoreIOT device token/session per virtual device if using direct MQTT; do not commit tokens to Git. For gateway-specific APIs, adapt based on account permissions.",
+    "tasmota_rule": "Member 3 maps native Tasmota SHT31 sensor keys to the same cloud telemetry keys; Tasmota is not required to publish ColdGuard envelope."
+  },
+  "examples": {
+    "zone_a_telemetry": {
+      "v": 1,
+      "type": "telemetry",
+      "device_id": "yolo-main-01",
+      "zone_id": "zone_a",
+      "boot_id": "a1b2c3d4",
+      "seq": 17,
+      "uptime_ms": 17000,
+      "ts": null,
+      "data": {
+        "temperature_c": 5.8,
+        "humidity_pct": 75.4,
+        "door_open": false,
+        "sensor_ok": true,
+        "source": "sht40_modbus"
+      }
+    },
+    "zone_b_telemetry": {
+      "v": 1,
+      "type": "telemetry",
+      "device_id": "espnow-node-01",
+      "zone_id": "zone_b",
+      "boot_id": "e5f60718",
+      "seq": 102,
+      "uptime_ms": 204000,
+      "ts": null,
+      "data": {
+        "temperature_c": 6.2,
+        "humidity_pct": null,
+        "door_open": null,
+        "sensor_ok": true,
+        "source": "ds18b20_espnow"
+      }
+    },
+    "main_status": {
+      "v": 1,
+      "type": "status",
+      "device_id": "yolo-main-01",
+      "ts": null,
+      "data": {
+        "online": true,
+        "wifi_connected": true,
+        "mqtt_connected": true,
+        "rssi_dbm": -53,
+        "firmware_version": "0.1.0",
+        "uptime_ms": 59000
+      }
+    },
+    "mute_buzzer_command": {
+      "v": 1,
+      "type": "command",
+      "device_id": "gateway-01",
+      "target_device_id": "yolo-main-01",
+      "request_id": "gw-000001",
+      "ts": "2026-11-04T14:00:01Z",
+      "data": {
+        "action": "mute_buzzer",
+        "params": {
+          "mute": true
+        }
+      }
+    },
+    "mute_buzzer_ack": {
+      "v": 1,
+      "type": "ack",
+      "device_id": "yolo-main-01",
+      "request_id": "gw-000001",
+      "ts": null,
+      "data": {
+        "action": "mute_buzzer",
+        "success": true,
+        "result": {
+          "buzzer_muted": true
+        },
+        "error_code": null
+      }
+    },
+    "set_threshold_command": {
+      "v": 1,
+      "type": "command",
+      "device_id": "gateway-01",
+      "target_device_id": "yolo-main-01",
+      "request_id": "gw-000002",
+      "ts": "2026-11-04T14:01:01Z",
+      "data": {
+        "action": "set_threshold",
+        "params": {
+          "zone_id": "zone_a",
+          "min_c": 2.0,
+          "max_c": 8.0
+        }
+      }
+    },
+    "temperature_high_event": {
+      "v": 1,
+      "type": "event",
+      "device_id": "gateway-01",
+      "zone_id": "zone_a",
+      "event_id": "evt-20261104-0001",
+      "ts": "2026-11-04T14:02:00Z",
+      "data": {
+        "code": "TEMP_HIGH",
+        "severity": "warning",
+        "state": "active",
+        "value": 9.2,
+        "threshold": 8.0,
+        "message": "Nhiệt độ vượt ngưỡng"
+      }
+    }
+  }
+}

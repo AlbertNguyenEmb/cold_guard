@@ -1,0 +1,4 @@
+# Sensor node uses the original ESP32; controller uses ESP32-S3 independently.
+CONFIG_IDF_TARGET="esp32"
+CONFIG_LOG_DEFAULT_LEVEL_INFO=y
+CONFIG_FREERTOS_HZ=100

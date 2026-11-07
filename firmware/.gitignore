@@ -1,0 +1,8 @@
+# Generated output from both independent ESP-IDF projects.
+**/build*/
+**/managed_components/
+**/sdkconfig
+**/sdkconfig.old
+**/compile_commands.json
+**/__pycache__/
+*.log
